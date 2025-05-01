@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SOS Torch Blinker</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
+    }
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
+      border: none;
+      border-radius: 5px;
+      background: #0f0;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <h1>SOS Torch Blinker</h1>
+  <button onclick="startSOS()">Start SOS</button>
+  <button onclick="stopSOS()">Stop</button>
+
+  <script>
+    let stream, track, blinking = false;
+
+    async function startCamera() {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      track = stream.getVideoTracks()[0];
+      const capabilities = track.getCapabilities();
+      if (!capabilities.torch) {
+        alert("Torch not supported!");
+        return false;
+      }
+      return true;
+    }
+
+    async function toggleTorch(state) {
+      try {
+        await track.applyConstraints({ advanced: [{ torch: state }] });
+      } catch (e) {
+        console.error("Torch error:", e);
+      }
+    }
+
+    async function blink(times, speed) {
+      for (let i = 0; i < times; i++) {
+        await toggleTorch(true);
+        await delay(speed);
+        await toggleTorch(false);
+        await delay(speed);
+      }
+    }
+
+    function delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function startSOS() {
+      if (!await startCamera()) return;
+      blinking = true;
+
+      while (blinking) {
+        await blink(3, 150); // 3 quick blinks
+        await delay(800);    // pause before next set
+      }
+    }
+
+    function stopSOS() {
+      blinking = false;
+      if (track) track.stop();
+    }
+  </script>
+</body>
+</html>
